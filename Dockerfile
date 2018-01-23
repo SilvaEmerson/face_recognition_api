@@ -31,6 +31,8 @@ RUN cd  /root/dlib/ && \
     python3 setup.py install --yes USE_AVX_INSTRUCTIONS
 
 COPY ./face_recognition /root/face_recognition
+
 RUN cd /root/face_recognition && \
-     pip3 install -r requirements.txt && \
-     python3 API.py
+     pip3 install -r requirements.txt
+
+CMD ["python3", "./root/face_recognition/API.py"]
