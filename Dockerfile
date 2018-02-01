@@ -28,11 +28,11 @@ RUN apt-get install -y --fix-missing \
 COPY ./dlib-19.8 /root/dlib
 
 RUN cd  /root/dlib/ && \
-    python3 setup.py install --yes USE_AVX_INSTRUCTIONS
+    python3 setup.py install
 
 COPY ./face_recognition /root/face_recognition
 
 RUN cd /root/face_recognition && \
      pip3 install -r requirements.txt
 
-CMD ["python3", "./root/face_recognition/API.py"]
+CMD python3 ./root/face_recognition/API.py

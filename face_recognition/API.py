@@ -55,7 +55,9 @@ def detect_person(file_name):
     result = { i[0]:i[1] for i in zip(results, os.listdir('./train')) }
 
     #retorna apenas a classe(pessoa) com flag True
-    return result[True].rsplit('.', 1)[0]
+    # return (result[True].rsplit('.', 1)[0])
+
+    return """<img src="./static/train/%s"/>"""%(result[True])
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
