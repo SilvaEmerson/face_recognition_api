@@ -3,13 +3,11 @@
 import face_recognition as fr
 from flask import Flask, jsonify, request, redirect, render_template
 from werkzeug.utils import secure_filename
-import subprocess as sp
 import os
 import json
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-UPLOAD_FOLDER = 'static/train'
-
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'txt'}
+UPLOAD_FOLDER = './static/train'
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -84,20 +82,23 @@ def add_image():
             return redirect(request.url)
 
         file = request.files['file']
-
         if file.filename == '':
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            img = fr.load_image_file(filename)
+            
+            saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(saved_path)
+
+            img = fr.load_image_file('./static/train/%s'%filename)
             img = fr.face_encodings(img)
 
             if len(img) == 0:
+                os.system('rm ./static/train/%s'%filename)
                 return "An error hapenned, please choose another picture"
 
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return """<h1>Upload completed</h1>"""
+            return "Upload completed"
 
     return  render_template('add-image-template.html')
 
