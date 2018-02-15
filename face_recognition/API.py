@@ -7,32 +7,15 @@ import os
 import json
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'txt'}
-UPLOAD_FOLDER = './static/train'
+UPLOAD_FOLDER = './root/face_recognition/static/train'
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+#manage file
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-@app.route('/', methods=['GET', 'POST'])
-
-def upload_image():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            return redirect(request.url)
-
-        file = request.files['file']
-
-        if file.filename == '':
-            return redirect(request.url)
-
-        if file and allowed_file(file.filename):
-            return detect_person(file)
-
-    return  render_template('index.html')
 
 def detect_person(file_name):
     img = fr.load_image_file(file_name)
@@ -40,10 +23,10 @@ def detect_person(file_name):
 
     # crie um diretório np root com o nome train contendo
     # as imagens de treino
-    know_images = os.listdir('./static/train')
+    know_images = os.listdir('./root/face_recognition/static/train')
     #o index 0 escolhe a primeira face da imagem, mas assumindo
     #que existe apenas uma
-    know_images_encoded = [fr.face_encodings(fr.load_image_file('./static/train/' + i))[0] for i in know_images]
+    know_images_encoded = [fr.face_encodings(fr.load_image_file('./root/face_recognition/static/train/' + i))[0] for i in know_images]
 
     if len(img) == 0:
         return jsonify([{"response": "An error hapenned, please choose another picture"}])
@@ -68,14 +51,37 @@ def detect_person(file_name):
     if results.count(False) == len(results):
         return jsonify([{"response": "Unknow person"}])
 
-    result = { i[0]:i[1] for i in zip(results, os.listdir('./static/train')) }
+    result = { i[0]:i[1] for i in zip(results, os.listdir('./root/face_recognition/static/train')) }
 
     #retorna apenas a classe(pessoa) com flag True
     return jsonify([{"response": result[True].rsplit('.', 1)[0]}])
 
+#resources
+
+@app.route('/images', methods=['GET'])
+def get_filenames():
+    if request.method == 'GET':
+        filename = [name.rsplit('.', 1)[0] for name in os.listdir("./root/face_recognition/static/train/")]
+
+        return jsonify([{"filanames": filename}])
+
+@app.route('/upload_image', methods=['GET', 'POST'])
+def upload_image():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return redirect(request.url)
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            return detect_person(file)
+
+    return  render_template('index.html')
 
 @app.route('/add_image', methods=['GET', 'POST'])
-
 def add_image():
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -87,20 +93,51 @@ def add_image():
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            
+
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(saved_path)
 
-            img = fr.load_image_file('./static/train/%s'%filename)
+            img = fr.load_image_file('./root/face_recognition/static/train/%s'%filename)
             img = fr.face_encodings(img)
 
             if len(img) == 0:
-                os.system('rm ./static/train/%s'%filename)
-                return "An error hapenned, please choose another picture"
+                os.system('rm ./root/face_recognition/static/train/%s' % filename)
+                return "An error happened, please choose another picture"
 
             return "Upload completed"
 
     return  render_template('add-image-template.html')
+
+@app.route('/delete_image', methods=['DELETE'])
+def delete_image():
+
+    if(request.is_json):
+
+        content = request.get_json()
+        filename = content['filename'].rsplit('.', 1)[0]
+
+        if(filename != ""):
+            files = [name.rsplit('.', 1)[0] for name in os.listdir("./root/face_recognition/static/train/")]
+
+            exists = False
+
+            for name in files:
+                if(name == filename):
+                    exists = True
+
+            if exists:
+                os.system('rm ./root/face_recognition/static/train/%s.*' % filename)
+                return jsonify([{"response": "Removed"}])
+
+            else:
+                return jsonify([{"response": "Not removed"}])
+
+
+
+
+        else:
+            return "An error happened, please choose a filename"
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

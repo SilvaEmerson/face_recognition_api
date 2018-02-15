@@ -1,2 +1,3 @@
 dlib-19.8
 .directory
+./face_recognition/requirements.txt
