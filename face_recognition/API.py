@@ -43,7 +43,7 @@ def detect_person(file_name):
 
             results.append(name)
 
-        return jsonify([{"result": results}])
+        return jsonify([{"response": results}])
 
     img = img[0]
     results = fr.compare_faces(know_images_encoded, img)
