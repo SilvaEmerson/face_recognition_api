@@ -25,7 +25,7 @@ def detect_person(file_name):
     # crie um diretório no root com o nome train contendo
     # as imagens de treino
     know_images = os.listdir('./root/face_recognition/static/train')
-    
+
     know_images_encoded = [np.load('./root/face_recognition/static/train/' + i) for i in know_images]
     # know_images_encoded = [fr.face_encodings(fr.load_image_file('./root/face_recognition/static/train/' + i))[0] for i in know_images]
 
@@ -105,7 +105,7 @@ def add_image():
 
             if len(img) == 0 or len(img) >= 2:
                 return "An error happened, please choose another picture"
-            
+
             os.system('rm ./root/face_recognition/static/train/%s' % filename)
             np.save('./root/face_recognition/static/train/%s'%filename.rsplit('.', 1)[0], img[0])
             return "Upload completed"
@@ -136,9 +136,6 @@ def delete_image():
 
             else:
                 return jsonify([{"response": "Not removed"}])
-
-
-
 
         else:
             return "An error happened, please choose a filename"
