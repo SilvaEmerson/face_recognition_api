@@ -64,7 +64,7 @@ def get_filenames():
     if request.method == 'GET':
         filename = [name.rsplit('.', 1)[0] for name in os.listdir("./root/face_recognition/static/train/")]
 
-        return jsonify([{"filanames": filename}])
+        return jsonify([{"filenames": filename}])
 
 
 @app.route('/upload_image', methods=['GET', 'POST'])
@@ -115,11 +115,10 @@ def add_image():
 
 @app.route('/delete_image', methods=['DELETE'])
 def delete_image():
+    if request.method == 'DELETE':
 
-    if(request.is_json):
-
-        content = request.get_json()
-        filename = content['filename'].rsplit('.', 1)[0]
+        filename = request.args.get('filename')
+        filename = secure_filename(filename)
 
         if(filename != ""):
             files = [name.rsplit('.', 1)[0] for name in os.listdir("./root/face_recognition/static/train/")]
@@ -139,6 +138,32 @@ def delete_image():
 
         else:
             return "An error happened, please choose a filename"
+
+    #Old version
+
+    # if(request.is_json):
+    #
+    #     content = request.get_json()
+    #     filename = content['filename'].rsplit('.', 1)[0]
+    #
+    #     if(filename != ""):
+    #         files = [name.rsplit('.', 1)[0] for name in os.listdir("./root/face_recognition/static/train/")]
+    #
+    #         exists = False
+    #
+    #         for name in files:
+    #             if(name == filename):
+    #                 exists = True
+    #
+    #         if exists:
+    #             os.system('rm ./root/face_recognition/static/train/%s.*' % filename)
+    #             return jsonify([{"response": "Removed"}])
+    #
+    #         else:
+    #             return jsonify([{"response": "Not removed"}])
+    #
+    #     else:
+    #         return "An error happened, please choose a filename"
 
 
 if __name__ == "__main__":
