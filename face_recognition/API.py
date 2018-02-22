@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 import os
 import json
 import numpy as np
+import requests
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'txt', 'npy'}
 UPLOAD_FOLDER = './root/face_recognition/static/train'
@@ -58,6 +59,24 @@ def detect_person(file_name):
     return jsonify([{"response": result[True].rsplit('.', 1)[0]}])
 
 
+def send_file(path):
+    url = "https://api.cloudinary.com/v1_1/silvaemerson/image/upload"
+
+    jsonData = {}
+
+    #open file
+    files = {'file': open(path, 'rb')}
+    values = {'upload_preset': 'train_set'}
+
+    #send file
+    response = requests.post(url, files=files, data=values)
+    print("\n\nStatus: " + str(response.status_code) + "\n\n")
+    if(response.status_code == 200):
+        jsonData = json.loads(response.text)
+        print(jsonData)
+
+    return jsonData
+
 #resources
 @app.route('/images', methods=['GET'])
 def get_filenames():
@@ -97,27 +116,37 @@ def add_image():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
+            #save file
             saved_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(saved_path)
 
+            #load face
             img = fr.load_image_file('./root/face_recognition/static/train/%s'%filename)
             img = fr.face_encodings(img)
 
+            #save only face, if has more than one, don't will save it
             if len(img) == 0 or len(img) >= 2:
+                os.system('rm ./root/face_recognition/static/train/%s' % filename)
                 return "An error happened, please choose another picture"
 
+            #send image to Cloudinary
+            send_file(saved_path)
+
+            #delete image
             os.system('rm ./root/face_recognition/static/train/%s' % filename)
+
+            #save encode of image
             np.save('./root/face_recognition/static/train/%s'%filename.rsplit('.', 1)[0], img[0])
             return "Upload completed"
 
     return  render_template('add-image-template.html')
 
 
-@app.route('/delete_image', methods=['DELETE'])
-def delete_image():
+@app.route('/delete_image/<string:filename>', methods=['DELETE'])
+def delete_image(filename):
     if request.method == 'DELETE':
 
-        filename = request.args.get('filename')
+        # filename = request.args.get('filename')
         filename = secure_filename(filename)
 
         if(filename != ""):
