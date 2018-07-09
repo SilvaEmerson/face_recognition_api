@@ -23,14 +23,11 @@ def detect_person(file_name):
     img = fr.load_image_file(file_name)
     img = fr.face_encodings(img)
 
-    # crie um diretório no root com o nome train contendo
-    # as imagens de treino
     know_images = os.listdir("./root/face_recognition/static/train")
 
     know_images_encoded = [
         np.load("./root/face_recognition/static/train/" + i) for i in know_images
     ]
-    # know_images_encoded = [fr.face_encodings(fr.load_image_file('./root/face_recognition/static/train/' + i))[0] for i in know_images]
 
     if len(img) == 0:
         return jsonify(
@@ -62,30 +59,9 @@ def detect_person(file_name):
         for i in zip(results, os.listdir("./root/face_recognition/static/train"))
     }
 
-    # retorna apenas a classe(pessoa) com flag True
     return jsonify([{"response": result[True].rsplit(".", 1)[0]}])
 
 
-def send_file(path):
-    url = "https://api.cloudinary.com/v1_1/silvaemerson/image/upload"
-
-    jsonData = {}
-
-    # open file
-    files = {"file": open(path, "rb")}
-    values = {"upload_preset": "train_set"}
-
-    # send file
-    response = requests.post(url, files=files, data=values)
-    print("\n\nStatus: " + str(response.status_code) + "\n\n")
-    if response.status_code == 200:
-        jsonData = json.loads(response.text)
-        print(jsonData)
-
-    return jsonData
-
-
-# resources
 @app.route("/images", methods=["GET"])
 def get_filenames():
     if request.method == "GET":
@@ -127,28 +103,20 @@ def add_image():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
-            # save file
             saved_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(saved_path)
 
-            # load face
             img = fr.load_image_file(
                 "./root/face_recognition/static/train/%s" % filename
             )
             img = fr.face_encodings(img)
 
-            # save only face, if has more than one, don't will save it
             if len(img) == 0 or len(img) >= 2:
                 os.system("rm ./root/face_recognition/static/train/%s" % filename)
                 return "An error happened, please choose another picture"
 
-            # send image to Cloudinary
-            send_file(saved_path)
-
-            # delete image
             os.system("rm ./root/face_recognition/static/train/%s" % filename)
 
-            # save encode of image
             np.save(
                 "./root/face_recognition/static/train/%s" % filename.rsplit(".", 1)[0],
                 img[0],
@@ -162,7 +130,6 @@ def add_image():
 def delete_image(filename):
     if request.method == "DELETE":
 
-        # filename = request.args.get('filename')
         filename = secure_filename(filename)
 
         if filename != "":
